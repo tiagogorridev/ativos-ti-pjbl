@@ -1,36 +1,56 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ArrowUpFromLine, ScanLine, Plus } from "lucide-react";
-import { getAlocacoes } from "@/lib/api";
-import type { Alocacao } from "@/lib/types";
+import { useCallback, useEffect, useState } from "react";
+import { ArrowUpFromLine, Plus } from "lucide-react";
+import { alocarAtivo, devolverAlocacao, getAlocacoes, getColaboradores } from "@/lib/api";
+import type { Alocacao, Colaborador } from "@/lib/types";
 import PageHeader from "@/components/common/PageHeader";
 import InfoBanner from "@/components/common/InfoBanner";
 import { Loading, ErrorMsg } from "@/components/common/DataState";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import AlocacoesTable from "@/components/alocacoes/AlocacoesTable";
+import NovaAlocacaoModal from "@/components/alocacoes/NovaAlocacaoModal";
 
 export default function AlocacoesPage() {
   const [alocacoes, setAlocacoes] = useState<Alocacao[] | null>(null);
+  const [colaboradores, setColaboradores] = useState<Colaborador[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [devolvidas, setDevolvidas] = useState<Set<number>>(new Set());
+  const [aviso, setAviso] = useState<string | null>(null);
+  const [modalAberto, setModalAberto] = useState(false);
 
-  useEffect(() => {
+  const carregar = useCallback(() => {
     getAlocacoes()
       .then(setAlocacoes)
       .catch((err: Error) => setError(err.message));
   }, []);
 
+  useEffect(() => {
+    carregar();
+    getColaboradores()
+      .then(setColaboradores)
+      .catch(() => setColaboradores([]));
+  }, [carregar]);
+
   if (error) return <ErrorMsg message={error} />;
   if (!alocacoes) return <Loading />;
 
-  const ativas = alocacoes.filter((a) => !devolvidas.has(a.id));
+  async function devolver(id: number) {
+    setAviso(null);
+    try {
+      // O BFF encerra a alocação (Azure SQL), devolve o ativo ao estoque (MongoDB)
+      // e publica o evento AtivoDevolvido no Service Bus.
+      await devolverAlocacao(id);
+      carregar();
+    } catch (err) {
+      setAviso(err instanceof Error ? err.message : "Não foi possível registrar a devolução.");
+    }
+  }
 
-  function devolver(id: number) {
-    // Simula a devolução (RF22) apenas na sessão do navegador — sem
-    // persistência, já que a API é mock/somente leitura (GET).
-    setDevolvidas((prev) => new Set(prev).add(id));
+  async function alocar(numeroPatrimonio: string, colaboradorId: number) {
+    await alocarAtivo(numeroPatrimonio, colaboradorId);
+    setModalAberto(false);
+    carregar();
   }
 
   return (
@@ -40,12 +60,9 @@ export default function AlocacoesPage() {
         title="Alocações"
         subtitle="Equipamentos atualmente em posse de colaboradores."
         actions={
-          <>
-            <Button variant="secondary" icon={<ScanLine size={15} />}>
-              Ler código
-            </Button>
-            <Button icon={<Plus size={15} />}>Nova Alocação</Button>
-          </>
+          <Button icon={<Plus size={15} />} onClick={() => setModalAberto(true)}>
+            Nova Alocação
+          </Button>
         }
       />
 
@@ -55,12 +72,24 @@ export default function AlocacoesPage() {
         histórico.
       </InfoBanner>
 
+      {aviso && (
+        <p className="mb-4 text-sm text-[var(--danger)] bg-red-50 border border-red-100 rounded-lg px-3 py-2">{aviso}</p>
+      )}
+
       <Card padded={false}>
         <div className="px-4 py-3 border-b border-[var(--border)] text-sm text-[var(--text-muted)]">
-          {ativas.length} alocações ativas
+          {alocacoes.length} alocações ativas
         </div>
-        <AlocacoesTable itens={ativas} onDevolver={devolver} />
+        <AlocacoesTable itens={alocacoes} onDevolver={devolver} />
       </Card>
+
+      {modalAberto && (
+        <NovaAlocacaoModal
+          colaboradores={colaboradores}
+          onClose={() => setModalAberto(false)}
+          onSubmit={alocar}
+        />
+      )}
     </div>
   );
 }

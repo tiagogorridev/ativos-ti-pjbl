@@ -1,18 +1,12 @@
-// Camada de comunicação do frontend com o backend (Azure Functions).
+// Camada de comunicação do frontend com o backend.
 //
-// Em produção, o Azure Static Web Apps expõe a Azure Function vinculada ao
-// projeto sob o mesmo domínio, em /api/*, então o valor padrão "/api"
-// funciona sem nenhuma configuração extra.
+// O frontend conversa só com o BFF, sempre passando pelo API Gateway:
+//   Frontend → API Gateway → BFF → microsserviços / Azure Function
 //
-// Para desenvolvimento local com a Azure Functions Core Tools + SWA CLI
-// (`swa start`), o mesmo caminho relativo "/api" também funciona, pois a
-// SWA CLI faz o proxy entre o frontend (Next.js) e a Function local.
-//
-// Para usar o Apidog (ou qualquer outro mock) no lugar da Azure Function
-// local, sem alterar nenhum código, basta criar um arquivo .env.local em
-// frontend/ com:
-//   NEXT_PUBLIC_API_BASE_URL=https://<seu-mock>.apidog.io
-// Passo a passo completo em docs/apidog-import.md.
+// Em produção, NEXT_PUBLIC_API_BASE_URL aponta para o gateway (ex.:
+// https://<gateway>/api) e NEXT_PUBLIC_API_KEY leva a chave exigida por ele
+// no cabeçalho X-API-Key. Em desenvolvimento, o padrão "/api" funciona com o
+// modo proxy do Next.js (npm run dev:backend), que encaminha /api/* ao gateway.
 import type {
   Ativo,
   AtivoEditavel,
@@ -20,11 +14,16 @@ import type {
   Colaborador,
   Alocacao,
   Manutencao,
-  Usuario,
   DashboardData,
 } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "/api";
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
+
+/** Cabeçalhos comuns: a chave do API Gateway vai em todas as chamadas, quando configurada. */
+function cabecalhos(extra: Record<string, string> = {}): Record<string, string> {
+  return { Accept: "application/json", ...(API_KEY ? { "X-API-Key": API_KEY } : {}), ...extra };
+}
 
 async function parseErro(response: Response): Promise<string> {
   try {
@@ -39,7 +38,7 @@ async function parseErro(response: Response): Promise<string> {
 async function get<T>(path: string): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method: "GET",
-    headers: { Accept: "application/json" },
+    headers: cabecalhos(),
   });
 
   if (!response.ok) {
@@ -57,7 +56,7 @@ async function send<T>(
 ): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
-    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    headers: cabecalhos({ "Content-Type": "application/json" }),
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
@@ -110,17 +109,22 @@ export function getColaboradores(): Promise<Colaborador[]> {
   return get<Colaborador[]>("/colaboradores");
 }
 
-/** GET /api/alocacoes — alocações ativas de ativos a colaboradores (RF21/RF25). */
+/** GET /api/alocacoes?vigentes=true — alocações ativas de ativos a colaboradores (RF21/RF25). */
 export function getAlocacoes(): Promise<Alocacao[]> {
-  return get<Alocacao[]>("/alocacoes");
+  return get<Alocacao[]>("/alocacoes?vigentes=true");
+}
+
+/** POST /api/alocacoes — aloca um ativo; o BFF recusa ativo que não está "Em estoque" (RF21/RF23). */
+export function alocarAtivo(numeroPatrimonio: string, colaboradorId: number): Promise<Alocacao> {
+  return send<Alocacao>("POST", "/alocacoes", { numeroPatrimonio, colaboradorId });
+}
+
+/** POST /api/alocacoes/{id}/devolucao — encerra a alocação e devolve o ativo ao estoque (RF22). */
+export function devolverAlocacao(id: number): Promise<Alocacao> {
+  return send<Alocacao>("POST", `/alocacoes/${id}/devolucao`, {});
 }
 
 /** GET /api/manutencoes — histórico de manutenções e custos (RF27-RF31). */
 export function getManutencoes(): Promise<Manutencao[]> {
   return get<Manutencao[]>("/manutencoes");
-}
-
-/** GET /api/usuarios — usuários do sistema e seus perfis (RF06/RF07). */
-export function getUsuarios(): Promise<Usuario[]> {
-  return get<Usuario[]>("/usuarios");
 }

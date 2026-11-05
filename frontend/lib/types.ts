@@ -1,6 +1,5 @@
 export type StatusAtivo = "Em estoque" | "Em uso" | "Em manutenção" | "Baixado";
 export type SituacaoPessoa = "Ativo" | "Inativo";
-export type PerfilUsuario = "Colaborador" | "Técnico de TI" | "Gestor de TI";
 export type TipoManutencao = "Corretiva" | "Preventiva";
 
 export interface Ativo {
@@ -51,14 +50,6 @@ export interface Manutencao {
   custo: number;
 }
 
-export interface Usuario {
-  id: number;
-  nome: string;
-  contaCorporativa: string;
-  perfil: PerfilUsuario;
-  ultimoAcesso: string;
-  situacao: SituacaoPessoa;
-}
 
 export interface Movimentacao {
   id: number;
