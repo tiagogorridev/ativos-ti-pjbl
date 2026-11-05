@@ -1,0 +1,49 @@
+# Ambiente local, sem custo: SQL Server em container (mesmo motor do Azure SQL) + o microsserviço.
+# Uso:  docker compose up --build
+# Swagger: http://localhost:8083/swagger-ui.html
+name: ms-alocacoes
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    # Em Mac com Apple Silicon, o Docker Desktop roda esta imagem pela emulação (Rosetta).
+    platform: linux/amd64
+    container_name: ms-alocacoes-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${DB_PASSWORD:-Local#Dev2026}
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  # Cria o banco "alocacoes" (o Flyway cria as tabelas, mas não o banco).
+  criar-banco:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: ${DB_PASSWORD:-Local#Dev2026}
+    entrypoint:
+      - /bin/bash
+      - -c
+      - /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "IF DB_ID('alocacoes') IS NULL CREATE DATABASE alocacoes"
+
+  ms-alocacoes:
+    build: .
+    container_name: ms-alocacoes
+    environment:
+      DB_URL: jdbc:sqlserver://sqlserver:1433;databaseName=alocacoes;encrypt=true;trustServerCertificate=true
+      DB_USER: sa
+      DB_PASSWORD: ${DB_PASSWORD:-Local#Dev2026}
+    depends_on:
+      criar-banco:
+        condition: service_completed_successfully
+    ports:
+      - "8083:8083"
