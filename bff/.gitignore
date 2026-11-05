@@ -1,0 +1,11 @@
+# dependências e build
+node_modules/
+dist/
+
+# sistema / editor
+.DS_Store
+.vscode/
+.idea/
+
+# variáveis de ambiente locais (cadeia de conexão do Service Bus etc.)
+.env
