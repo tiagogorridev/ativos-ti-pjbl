@@ -9,11 +9,11 @@
 
 ## Link do repositório GitHub
 
-https://github.com/FabioVisentainer/ativos-ti-pjbl
+https://github.com/tiagogorridev/ativos-ti-pjbl
 
 ## Link do site (Azure Static Web Apps)
 
-https://green-desert-01af5d50f.7.azurestaticapps.net
+https://kind-bush-0c7a5e010.5.azurestaticapps.net
 
 ## Azure Function (mock backend)
 

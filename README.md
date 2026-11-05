@@ -5,7 +5,8 @@ Azure Functions (mock) para gerenciar o parque de ativos de TI de uma
 empresa (notebooks, monitores, periféricos etc.). Projeto desenvolvido para
 a disciplina de PJBL, replicando o protótipo funcional do sistema.
 
-- **Site publicado (Azure Static Web Apps):** https://green-desert-01af5d50f.7.azurestaticapps.net
+- **Repositório GitHub:** https://github.com/tiagogorridev/ativos-ti-pjbl
+- **Site publicado (Azure Static Web Apps):** https://kind-bush-0c7a5e010.5.azurestaticapps.net
 - **Grupo:** ver [`GRUPO.md`](./GRUPO.md)
 - **Prompt de IA utilizado para gerar o frontend:** ver [`Prompt.md`](./Prompt.md)
 - **Como importar os mocks no Apidog:** ver [`docs/apidog-import.md`](./docs/apidog-import.md)
