@@ -75,6 +75,8 @@ npm start                                            # http://localhost:7071/api
 npm test
 ```
 
+Roda os testes unitários do domínio (`test/dominio.test.js`) e os testes de arquitetura (`test/arquitetura.test.js`), que conferem se `src/dominio` não depende do Azure e se cada arquivo de `src/functions` registra uma única Function.
+
 ## Configurações da Function App
 
 | Configuração | Uso |

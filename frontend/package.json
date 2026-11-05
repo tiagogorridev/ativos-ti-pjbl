@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --test \"test/*.test.mjs\"",
     "dev:backend": "NEXT_PUBLIC_API_BASE_URL= GATEWAY_URL=http://localhost:8080 next dev"
   },
   "dependencies": {

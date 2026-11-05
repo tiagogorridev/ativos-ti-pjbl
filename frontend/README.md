@@ -49,6 +49,14 @@ Build de produção (gera a pasta `out/`, publicada no Static Web Apps):
 NEXT_PUBLIC_API_BASE_URL=https://<gateway>/api NEXT_PUBLIC_API_KEY=<chave do gateway> npm run build
 ```
 
+## Testes
+
+```bash
+npm test
+```
+
+Roda os testes de arquitetura (`test/arquitetura.test.mjs`), que leem os imports e conferem as fronteiras do código: só `lib/api.ts` faz chamadas HTTP, um módulo de tela não importa componentes de outro, os componentes não chamam a API e o Design System (`components/ui`) não depende das telas.
+
 ## Variáveis de ambiente
 
 | Variável | Uso |
