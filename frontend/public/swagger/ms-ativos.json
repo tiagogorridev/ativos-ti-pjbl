@@ -1,0 +1,848 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Microsserviço de Ativos",
+    "description": "Sistema de Controle de Ativos de Informática (PJBL/PUCPR). Cadastro e ciclo de vida dos ativos de TI e das manutenções, persistidos no MongoDB Atlas. A rota interna /api/ativos/{numeroPatrimonio}/uso, usada só pelo BFF na alocação e na devolução, não é exposta pelo API Gateway e foi omitida aqui.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://gateway.orangeforest-25f109e3.brazilsouth.azurecontainerapps.io",
+      "description": "API Gateway (exige o cabeçalho X-API-Key)"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Manutenções",
+      "description": "Manutenções e custos por ativo (MongoDB)"
+    },
+    {
+      "name": "Indicadores",
+      "description": "Números consolidados do parque de ativos para o dashboard"
+    },
+    {
+      "name": "Ativos",
+      "description": "Cadastro e ciclo de vida dos ativos de TI (MongoDB)"
+    }
+  ],
+  "paths": {
+    "/api/manutencoes/{id}": {
+      "get": {
+        "tags": [
+          "Manutenções"
+        ],
+        "summary": "Consulta uma manutenção",
+        "operationId": "obter",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManutencaoResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Manutenções"
+        ],
+        "summary": "Corrige uma manutenção (atualização parcial)",
+        "operationId": "atualizar",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AtualizarManutencaoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManutencaoResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Manutenções"
+        ],
+        "summary": "Exclui uma manutenção lançada por engano",
+        "operationId": "excluir",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensagemResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ativos/{numeroPatrimonio}": {
+      "get": {
+        "tags": [
+          "Ativos"
+        ],
+        "summary": "Consulta um ativo pelo número de patrimônio",
+        "operationId": "obter_1",
+        "parameters": [
+          {
+            "name": "numeroPatrimonio",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ativo encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AtivoResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Patrimônio não cadastrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AtivoResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Ativos"
+        ],
+        "summary": "Altera um ativo (atualização parcial)",
+        "description": "Também troca o status manualmente (manutenção, estoque, baixa). 'Em uso' só pela alocação.",
+        "operationId": "atualizar_1",
+        "parameters": [
+          {
+            "name": "numeroPatrimonio",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AtualizarAtivoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ativo alterado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AtivoResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Patrimônio não cadastrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AtivoResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Troca de status não permitida",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AtivoResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Ativos"
+        ],
+        "summary": "Exclui um ativo cadastrado por engano",
+        "operationId": "excluir_1",
+        "parameters": [
+          {
+            "name": "numeroPatrimonio",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ativo excluído",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensagemResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ativo alocado ou com histórico de manutenção",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensagemResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/manutencoes": {
+      "get": {
+        "tags": [
+          "Manutenções"
+        ],
+        "summary": "Lista o histórico de manutenções",
+        "description": "Mais recentes primeiro; filtra por numeroPatrimonio.",
+        "operationId": "listar",
+        "parameters": [
+          {
+            "name": "numeroPatrimonio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ManutencaoResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Manutenções"
+        ],
+        "summary": "Registra uma manutenção",
+        "operationId": "registrar",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovaManutencaoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Manutenção registrada",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManutencaoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campo obrigatório ausente ou inválido",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManutencaoResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Ativo não cadastrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManutencaoResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ativo baixado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManutencaoResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ativos": {
+      "get": {
+        "tags": [
+          "Ativos"
+        ],
+        "summary": "Pesquisa ativos",
+        "description": "Filtra por texto livre (busca) e por status. status=Todos desliga o filtro.",
+        "operationId": "listar_1",
+        "parameters": [
+          {
+            "name": "busca",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AtivoResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Ativos"
+        ],
+        "summary": "Cadastra um ativo",
+        "operationId": "criar",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovoAtivoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Ativo cadastrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AtivoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campo obrigatório ausente ou inválido",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AtivoResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Patrimônio já cadastrado ou status 'Em uso' informado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AtivoResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/indicadores": {
+      "get": {
+        "tags": [
+          "Indicadores"
+        ],
+        "summary": "Totais por status e setor e custo de manutenção por mês",
+        "operationId": "consultar",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/Indicadores"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AtualizarManutencaoRequest": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "tipo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descricao": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "custo": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        }
+      },
+      "ManutencaoResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "data": {
+            "type": "string",
+            "format": "date"
+          },
+          "numeroPatrimonio": {
+            "type": "string"
+          },
+          "equipamento": {
+            "type": "string"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "descricao": {
+            "type": "string"
+          },
+          "custo": {
+            "type": "number"
+          }
+        }
+      },
+      "AtualizarAtivoRequest": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "marca": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "modelo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "numeroSerie": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "colaborador": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "setor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dataAquisicao": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "valorAquisicao": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        }
+      },
+      "AtivoResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "tipo": {
+            "type": "string"
+          },
+          "marca": {
+            "type": "string"
+          },
+          "modelo": {
+            "type": "string"
+          },
+          "numeroPatrimonio": {
+            "type": "string"
+          },
+          "numeroSerie": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "colaborador": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "setor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dataAquisicao": {
+            "type": "string",
+            "format": "date"
+          },
+          "valorAquisicao": {
+            "type": "number"
+          },
+          "equipamento": {
+            "type": "string"
+          }
+        }
+      },
+      "UsoRequest": {
+        "type": "object",
+        "properties": {
+          "colaborador": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "setor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "NovaManutencaoRequest": {
+        "type": "object",
+        "properties": {
+          "numeroPatrimonio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "data": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "tipo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "descricao": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "custo": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        }
+      },
+      "NovoAtivoRequest": {
+        "type": "object",
+        "properties": {
+          "numeroPatrimonio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tipo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "marca": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "modelo": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "numeroSerie": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "colaborador": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "setor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dataAquisicao": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "valorAquisicao": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        }
+      },
+      "CustoPorMes": {
+        "type": "object",
+        "properties": {
+          "mes": {
+            "type": "string"
+          },
+          "valor": {
+            "type": "number"
+          }
+        }
+      },
+      "Indicadores": {
+        "type": "object",
+        "properties": {
+          "totalAtivos": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emUso": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emEstoque": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emManutencao": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "baixados": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "custoManutencaoAcumulado": {
+            "type": "number"
+          },
+          "ativosPorSetor": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuantidadePorSetor"
+            }
+          },
+          "custoManutencaoPorMes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustoPorMes"
+            }
+          }
+        }
+      },
+      "QuantidadePorSetor": {
+        "type": "object",
+        "properties": {
+          "setor": {
+            "type": "string"
+          },
+          "quantidade": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "MensagemResponse": {
+        "type": "object",
+        "properties": {
+          "mensagem": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "chaveGateway": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    }
+  },
+  "security": [
+    {
+      "chaveGateway": []
+    }
+  ]
+}

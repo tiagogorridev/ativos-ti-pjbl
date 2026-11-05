@@ -1,0 +1,706 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Microsserviço de Alocações",
+    "description": "Sistema de Controle de Ativos de Informática (PJBL/PUCPR). Colaboradores e alocações de ativos, persistidos no Azure SQL.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://gateway.orangeforest-25f109e3.brazilsouth.azurecontainerapps.io",
+      "description": "API Gateway (exige o cabeçalho X-API-Key)"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Colaboradores",
+      "description": "Cadastro dos colaboradores que recebem ativos (Azure SQL)"
+    },
+    {
+      "name": "Alocações",
+      "description": "Entrega e devolução de ativos aos colaboradores (Azure SQL)"
+    }
+  ],
+  "paths": {
+    "/api/colaboradores/{id}": {
+      "get": {
+        "tags": [
+          "Colaboradores"
+        ],
+        "summary": "Consulta um colaborador",
+        "operationId": "obter",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Colaborador encontrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ColaboradorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Colaborador não cadastrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ColaboradorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Colaboradores"
+        ],
+        "summary": "Altera um colaborador (atualização parcial)",
+        "operationId": "atualizar",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AtualizarColaboradorRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Colaborador alterado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ColaboradorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Matrícula repetida ou inativação com ativo alocado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ColaboradorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Colaboradores"
+        ],
+        "summary": "Inativa um colaborador (exclusão lógica)",
+        "description": "O registro não é apagado, para preservar o histórico de alocações.",
+        "operationId": "inativar",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Colaborador inativado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ColaboradorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Colaborador com ativo alocado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ColaboradorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/alocacoes/{id}": {
+      "get": {
+        "tags": [
+          "Alocações"
+        ],
+        "summary": "Consulta uma alocação",
+        "operationId": "obter_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlocacaoResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Alocações"
+        ],
+        "summary": "Corrige uma alocação vigente (atualização parcial)",
+        "operationId": "atualizar_1",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AtualizarAlocacaoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Alocação alterada",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlocacaoResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Alocação já encerrada",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlocacaoResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Alocações"
+        ],
+        "summary": "Exclui uma alocação vigente lançada por engano",
+        "operationId": "excluir",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Alocação excluída",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensagemResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Alocação encerrada (histórico)",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MensagemResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/colaboradores": {
+      "get": {
+        "tags": [
+          "Colaboradores"
+        ],
+        "summary": "Lista os colaboradores com a quantidade de ativos alocados",
+        "operationId": "listar",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ColaboradorResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Colaboradores"
+        ],
+        "summary": "Cadastra um colaborador",
+        "operationId": "cadastrar",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovoColaboradorRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Colaborador cadastrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ColaboradorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campo obrigatório ausente",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ColaboradorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Matrícula já cadastrada",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ColaboradorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/alocacoes": {
+      "get": {
+        "tags": [
+          "Alocações"
+        ],
+        "summary": "Lista alocações",
+        "description": "vigentes=true só as abertas, vigentes=false só o histórico; sem o parâmetro, todas.",
+        "operationId": "listar_1",
+        "parameters": [
+          {
+            "name": "vigentes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "colaboradorId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlocacaoResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Alocações"
+        ],
+        "summary": "Aloca um ativo a um colaborador",
+        "operationId": "alocar",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NovaAlocacaoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Alocação registrada",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlocacaoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Campo obrigatório ausente",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlocacaoResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Colaborador não cadastrado",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlocacaoResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Ativo já alocado ou colaborador inativo",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlocacaoResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/alocacoes/{id}/devolucao": {
+      "post": {
+        "tags": [
+          "Alocações"
+        ],
+        "summary": "Registra a devolução do ativo",
+        "description": "Encerra a alocação; sem dataDevolucao, usa a data de hoje.",
+        "operationId": "devolver",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevolucaoRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Devolução registrada",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlocacaoResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Alocação já encerrada",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlocacaoResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AtualizarColaboradorRequest": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "matricula": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "setor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "situacao": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "ColaboradorResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "nome": {
+            "type": "string"
+          },
+          "matricula": {
+            "type": "string"
+          },
+          "setor": {
+            "type": "string"
+          },
+          "situacao": {
+            "type": "string"
+          },
+          "ativosAlocados": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AtualizarAlocacaoRequest": {
+        "type": "object",
+        "properties": {
+          "equipamento": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dataRetirada": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "AlocacaoResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "numeroPatrimonio": {
+            "type": "string"
+          },
+          "equipamento": {
+            "type": "string"
+          },
+          "colaboradorId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "colaborador": {
+            "type": "string"
+          },
+          "setor": {
+            "type": "string"
+          },
+          "dataRetirada": {
+            "type": "string",
+            "format": "date"
+          },
+          "dataDevolucao": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "vigente": {
+            "type": "boolean"
+          }
+        }
+      },
+      "NovoColaboradorRequest": {
+        "type": "object",
+        "properties": {
+          "nome": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "matricula": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "setor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "NovaAlocacaoRequest": {
+        "type": "object",
+        "properties": {
+          "numeroPatrimonio": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "equipamento": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "colaboradorId": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64"
+          },
+          "dataRetirada": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "DevolucaoRequest": {
+        "type": "object",
+        "properties": {
+          "dataDevolucao": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "MensagemResponse": {
+        "type": "object",
+        "properties": {
+          "mensagem": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "chaveGateway": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key"
+      }
+    }
+  },
+  "security": [
+    {
+      "chaveGateway": []
+    }
+  ]
+}

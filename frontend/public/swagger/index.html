@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Swagger - Controle de Ativos de TI</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui.css">
+  <style>body { margin: 0; background: #fff; }</style>
+</head>
+<body>
+  <!--
+    Documentação OpenAPI do BFF e dos dois microsserviços. Os microsserviços e o BFF ficam
+    na rede interna do Azure (só o API Gateway é público), então os arquivos JSON desta pasta
+    são cópias do /v3/api-docs (microsserviços) e do /api-docs (BFF) de cada serviço.
+    O "Try it out" envia a chamada ao API Gateway: clique em "Authorize" e informe a chave X-API-Key.
+  -->
+  <div id="swagger-ui"></div>
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui-bundle.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14/swagger-ui-standalone-preset.js"></script>
+  <script>
+    // ?servico=bff | ativos | alocacoes abre direto a documentação do serviço.
+    const servicos = {
+      bff: { name: "BFF (Node.js)", url: "bff.json" },
+      ativos: { name: "Microsserviço de Ativos (MongoDB)", url: "ms-ativos.json" },
+      alocacoes: { name: "Microsserviço de Alocações (Azure SQL)", url: "ms-alocacoes.json" }
+    };
+    const escolhido = servicos[new URLSearchParams(location.search).get("servico")] || servicos.bff;
+    window.ui = SwaggerUIBundle({
+      urls: Object.values(servicos),
+      "urls.primaryName": escolhido.name,
+      dom_id: "#swagger-ui",
+      deepLinking: true,
+      presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+      layout: "StandaloneLayout"
+    });
+  </script>
+</body>
+</html>

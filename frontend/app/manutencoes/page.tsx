@@ -64,7 +64,7 @@ export default function ManutencoesPage() {
         <StatCard
           label="Ativos com manutenção recente"
           value={emManutencaoAgora}
-          hint={`Últimos ${DIAS_RECENTE} dias (mock)`}
+          hint={`Últimos ${DIAS_RECENTE} dias`}
           valueClassName="text-[var(--warning)]"
         />
         <StatCard label="Custo total registrado" value={formatCurrency(custoTotal)} />

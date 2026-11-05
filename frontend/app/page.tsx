@@ -41,7 +41,7 @@ export default function DashboardPage() {
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Total de ativos" value={data.totalAtivos} hint="Dados mock" />
+        <StatCard label="Total de ativos" value={data.totalAtivos} hint="Cadastrados no MongoDB Atlas" />
         <StatCard
           label="Em uso"
           value={data.emUso}
@@ -57,7 +57,7 @@ export default function DashboardPage() {
         <StatCard
           label="Custo de manutenção (ano)"
           value={formatCurrency(data.custoManutencaoAcumulado)}
-          hint="Acumulado no período mock"
+          hint="Soma das manutenções registradas"
         />
       </div>
 
