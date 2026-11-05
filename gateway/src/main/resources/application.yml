@@ -21,16 +21,22 @@ spring:
                   - DELETE
                   - OPTIONS
                 allowedHeaders: "*"
+                exposedHeaders: X-Served-By
                 maxAge: 3600
           routes:
-            # Todas as chamadas /api/** do frontend seguem para o backend (Kotlin/Spring Boot).
-            - id: backend-api
-              uri: ${BACKEND_URL:http://localhost:8081}
+            # O frontend só fala com o BFF: todas as chamadas /api/** e o /aggregated-data seguem para ele.
+            - id: bff
+              uri: ${BFF_URL:http://localhost:8084}
               predicates:
-                - Path=/api/**
+                - Path=/api/**,/aggregated-data
+
+# Chave exigida no cabeçalho X-API-Key (vazia = sem bloqueio, só para desenvolvimento local).
+gateway:
+  api-key: ${GATEWAY_API_KEY:}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,gateway
+        # Sem o endpoint "gateway": ele lista as rotas internas e permite alterá-las, sem passar pela chave.
+        include: health,info
