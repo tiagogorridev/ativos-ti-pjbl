@@ -1,0 +1,17 @@
+{
+  "name": "functions-ativos-ti",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Azure Functions do Sistema de Controle de Ativos: cálculo de depreciação (HTTP) e consumo de eventos (Service Bus)",
+  "main": "src/functions/*.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "func start",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@azure/functions": "^4.5.0"
+  }
+}
