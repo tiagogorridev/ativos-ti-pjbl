@@ -1,0 +1,14 @@
+# Gradle / Kotlin
+.gradle/
+.kotlin/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE / sistema
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# variáveis de ambiente locais (senhas e strings de conexão)
+.env

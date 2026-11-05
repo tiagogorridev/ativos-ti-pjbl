@@ -1,0 +1,28 @@
+# Ambiente local, sem custo: MongoDB em container + o microsserviço.
+# Uso:  docker compose up --build
+# Swagger: http://localhost:8082/swagger-ui.html
+name: ms-ativos
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: ms-ativos-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  ms-ativos:
+    build: .
+    container_name: ms-ativos
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB_NAME: ativos_ti
+      SEED_ENABLED: "true"
+    depends_on:
+      - mongo
+    ports:
+      - "8082:8082"
+
+volumes:
+  mongo-data:

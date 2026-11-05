@@ -1,0 +1,28 @@
+server:
+  port: ${PORT:8082}
+
+spring:
+  application:
+    name: ms-ativos
+
+app:
+  mongo:
+    # Em nuvem: string de conexão do MongoDB Atlas (variável de ambiente, nunca no código).
+    uri: ${MONGO_URI:mongodb://localhost:27017}
+    database: ${MONGO_DB_NAME:ativos_ti}
+  seed:
+    # true: carrega dados de exemplo quando as coleções estão vazias (nunca apaga nada).
+    enabled: ${SEED_ENABLED:false}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

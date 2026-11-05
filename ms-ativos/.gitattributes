@@ -1,0 +1,2 @@
+# O gradlew roda dentro do container Linux (Dockerfile): precisa de LF.
+/gradlew text eol=lf
